@@ -7,5 +7,5 @@
 
   roles:
     #- {role: common }
-    - {role: testes }
+    - {role: teste }
     
