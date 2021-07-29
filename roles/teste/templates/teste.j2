@@ -1,0 +1,19 @@
+
+---
+master:
+  hosts:
+    srv_host01:
+        ansible_host: 10.17.181.3
+
+client:
+  children:
+    client-2com:
+
+client-2com:
+  hosts:
+{% for serv_ip in consulta_ip_server %}
+    hosts{{ loop.index }}:
+        ansible_host: {{ serv_ip }}
+{% endfor %} 
+
+

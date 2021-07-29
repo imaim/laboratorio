@@ -1,0 +1,21 @@
+---
+- name: Cat no arquivo temporario
+  command: cat /root/monitoramento/2com_inventory/inventori_tmp_teste.log
+  register: consulta_ip_porta
+
+- set_fact:
+    consulta_ip_porta={{consulta_ip_porta.stdout_lines}}
+
+# Funciona 
+- shell: "echo {{ item.split(': ')[0] }} has value {{ item.split(': ')[1] }} Cliente {{ item.split(': ')[2] }}"
+  loop: "{{consulta_ip_porta|flatten(levels=1)}}"
+
+# Cria arquivo de indice
+#- name: indice de hosts Dinâmico
+#  template:
+#    src: teste.j2
+#    dest: "/root/monitoramento/2com_inventory/inventories/hosts.yml"
+  
+
+
+  ###  loop: "{{ consulta_ip_server|flatten(levels=1) }}"

@@ -1,0 +1,6 @@
+
+---
+# Consulta sites omd 
+#- include: teste-acesso.yml
+#- include: indice-maker.yml
+- include: ping.yml

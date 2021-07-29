@@ -1,0 +1,6 @@
+
+---
+# Consulta sites omd 
+- include: atualiza_2com_vpn.yml
+- include: indice-maker.yml
+#- include: indice-maker-teste.yml

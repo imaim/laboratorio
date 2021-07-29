@@ -1,0 +1,7 @@
+---
+- name: pull from git
+  git:
+    repo: git@gitlab.com:2cominfraestrutura/vpn-inventario.git
+    dest: /root/monitoramento/vpn-inventario
+    update: yes
+    version: master

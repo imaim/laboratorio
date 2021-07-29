@@ -1,0 +1,21 @@
+---
+# Teste Ping
+- name: Criando Usuário baseado no grup server Com Home Custom
+  shell: |
+    useradd -d /home/2com -g root -G root -p `openssl passwd -1 {{ vault_ansible_2com_client }}` 2com
+  register: create_user_2com
+  args:
+    executable: /bin/bash
+  ignore_errors: yes
+
+- name: Insert variávies de ambiente no usuário de monitoramento
+  blockinfile:
+    path: /etc/sudoers
+    insertafter: ".*root.*ALL=(ALL).*ALL.*"
+    marker: "# {mark} Ansible #"
+    block: |
+      2com    ALL=(ALL)       ALL
+
+
+
+      

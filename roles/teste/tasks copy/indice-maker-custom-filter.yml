@@ -1,0 +1,53 @@
+---
+
+  # Consulta sites omd
+  - name: Consulta sites omd
+    shell : cat /root/monitoramento/2com_cluster_nuvem/roles/teste/files/indice-teste | awk '{print $1}'
+    ignore_errors: yes
+    register: consulta_ip_server
+    args:
+      executable: /bin/bash
+  - set_fact:
+      consulta_ip_server={{consulta_ip_server.stdout_lines}}
+    ignore_errors: yes
+  
+  - debug: var=consulta_ip_server
+  
+  - name: Consulta sites omd
+    shell : cat /root/monitoramento/2com_cluster_nuvem/roles/teste/files/indice-teste | awk '{print $2}'
+    ignore_errors: yes
+    register: consulta_nome_server
+    args:
+      executable: /bin/bash
+  - set_fact:
+      consulta_nome_server={{consulta_nome_server.stdout_lines}}
+    ignore_errors: yes
+  
+#  - set_fact:
+#      consulta_ip_nome_server: "{{ consulta_ip_nome_server| default(['name','ip'])  + [dict(name=item[0], ip=item[1])] }}"
+#    loop: "{{ consulta_nome_server | zip(consulta_ip_server) | list }}"
+#    ignore_errors: yes
+  - set_fact: 
+      consulta_ip_nome_server: "{{ dict | default({}) | combine( { name: item.0, ip: item.1 } ) }}"
+    with_items: 
+      - "{{consulta_nome_server}}"
+      - "{{consulta_ip_server}}"
+  #- set_fact: consulta_ip_nome_server="{{ consulta_nome_server | makedict(consulta_ip_server) }}"
+
+  - debug: var=item.ip
+    loop: "{{consulta_ip_nome_server}}"
+  - debug: var=item.name
+    loop: "{{consulta_ip_nome_server}}"
+
+  # Multi Banco
+  
+  - name: Consulta sites omd 
+    blockinfile:
+      path: /root/monitoramento/2com_cluster_nuvem/indice-teste.yml
+      block: |
+        hosts: 
+          {{ item.name }}:
+            ansible_host: {{ item.ip }}
+      maker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
+    loop:
+      - "{{ consulta_nome_server}}"

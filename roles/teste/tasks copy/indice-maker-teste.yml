@@ -1,0 +1,13 @@
+
+---
+
+- name: Cat no arquivo temporario
+  command: cat /root/monitoramento/2com_inventory/inventori_tmp.log
+  register: consulta_ip_porta
+
+- set_fact:
+    consulta_ip_porta={{consulta_ip_porta.stdout_lines}}
+
+- shell: "echo {{ item.split(': ')[0] }} has value {{ item.split(': ')[1] }}"
+  loop: "{{consulta_ip_porta|flatten(levels=1)}}"
+

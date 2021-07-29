@@ -1,0 +1,11 @@
+# Servidores de Monitoramento
+- name: Alterações Clientes
+  hosts: all
+  ##hosts: lab-ansible
+  #remote_user: root
+  #become: yes
+
+  roles:
+    #- {role: common }
+    - {role: testes }
+    

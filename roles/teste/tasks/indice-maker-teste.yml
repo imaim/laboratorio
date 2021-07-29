@@ -1,0 +1,42 @@
+---
+
+  # Consulta sites omd
+  - name: Consulta sites omd
+    shell : cat /root/monitoramento/2com_cluster_nuvem/roles/teste/files/indice-teste | awk '{print $1}'
+    ignore_errors: yes
+    register: consulta_ip_server
+    args:
+      executable: /bin/bash
+  - set_fact:
+      consulta_ip_server={{consulta_ip_server.stdout_lines}}
+    ignore_errors: yes
+  
+  - debug: var=consulta_ip_server
+  
+  - name: Consulta sites omd
+    shell : cat /root/monitoramento/2com_cluster_nuvem/roles/teste/files/indice-teste | awk '{print $2}'
+    ignore_errors: yes
+    register: consulta_nome_server
+    args:
+      executable: /bin/bash
+  - set_fact:
+      consulta_nome_server={{consulta_nome_server.stdout_lines}}
+    ignore_errors: yes
+  
+  - set_fact:
+      consulta_ip_nome_server: "{{ consulta_ip_nome_server| default(['name','ip'])  + [dict(name=item[0], ip=item[1])] }}"
+    loop: "{{ consulta_nome_server | zip(consulta_ip_server) | list }}"
+    ignore_errors: yes
+  
+  - debug: var=item.ip
+    loop: "{{consulta_ip_nome_server}}"
+  - debug: var=item.name
+    loop: "{{consulta_ip_nome_server}}"
+  
+  # Multi Banco
+  - name: indice de hosts
+    vars:
+      serv: "{{consulta_ip_nome_server}}"
+    template:
+      src: teste.j2
+      dest: "/root/2com_cluster_nuvem/indice-teste.yml"

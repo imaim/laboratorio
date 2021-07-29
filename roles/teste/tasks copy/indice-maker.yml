@@ -1,0 +1,52 @@
+---
+# Remove arquivo de inventario temporario anterior
+- name: Remove arquivo temporario
+  ansible.builtin.file:
+    path: /root/monitoramento/2com_inventory/inventori_tmp.log
+    state: absent
+
+
+# Consulta ip no master
+- name: Consulta ip no master
+  shell : cat  /opt/omd/sites/master/etc/check_mk/multisite.d/sites.mk | tr , '\n' | grep address | sed "s/'//g" | sed "s/(//g" | sed "s/://g" | sed "s/address//g" | sed "s/ //g"
+  ignore_errors: yes
+  register: consulta_ip_server
+  args:
+    executable: /bin/bash
+- set_fact:
+    consulta_ip_server={{consulta_ip_server.stdout_lines}}
+  ignore_errors: yes
+
+#- debug: var=consulta_ip_server
+
+- name: Consulta porta para o ip
+  shell : |
+    GET_PORTA=$(cat /root/monitoramento/vpn-inventario/2com-vpn | grep -w {{item}}| cut -d "=" -f2 | awk '{print $1}' |uniq)
+    if [ -z ${GET_PORTA} ] ;then
+      GET_PORTA_TRAT=22
+    else
+      GET_PORTA_TRAT=${GET_PORTA}
+    fi
+    echo -e "{{item}}: ${GET_PORTA_TRAT}" >> /root/monitoramento/2com_inventory/inventori_tmp.log
+  ignore_errors: yes
+  loop: "{{consulta_ip_server|flatten(levels=1)}}"
+  
+- name: Cat no arquivo temporario
+  command: cat /root/monitoramento/2com_inventory/inventori_tmp.log
+  register: consulta_ip_porta
+
+- set_fact:
+    consulta_ip_porta={{consulta_ip_porta.stdout_lines}}
+
+- shell: "echo {{ item.split(': ')[0] }} has value {{ item.split(': ')[1] }}"
+  loop: "{{consulta_ip_porta|flatten(levels=1)}}"
+
+# Cria arquivo de indice
+- name: indice de hosts Dinâmico
+  template:
+    src: teste.j2
+    dest: "/root/monitoramento/2com_inventory/inventories/hosts-homolog.yml"
+  
+
+
+  ###  loop: "{{ consulta_ip_server|flatten(levels=1) }}"
