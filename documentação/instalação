@@ -1,0 +1,121 @@
+
+Url de instalção guia
+    https://github.com/ansible/awx-operator#basic-install
+Basic install 
+
+1# -cria cluster no minikube
+    minikube start --addons=ingress --cpus=4 --cni=flannel --install-addons=true --kubernetes-version=stable --memory=6g
+
+    Saida: 
+            minikube v1.20.0 on Fedora 34
+        ✨  Using the kvm2 driver based on user configuration
+        👍  Starting control plane node minikube in cluster minikube
+        🔥  Creating kvm2 VM (CPUs=4, Memory=6144MB, Disk=20000MB) ...
+        🐳  Preparing Kubernetes v1.20.2 on Docker 20.10.6 ...
+            ▪ Generating certificates and keys ...
+            ▪ Booting up control plane ...
+            ▪ Configuring RBAC rules ...
+        🔗  Configuring Flannel (Container Networking Interface) ...
+        🔎  Verifying Kubernetes components...
+            ▪ Using image docker.io/jettech/kube-webhook-certgen:v1.5.1
+            ▪ Using image k8s.gcr.io/ingress-nginx/controller:v0.44.0
+            ▪ Using image gcr.io/k8s-minikube/storage-provisioner:v5
+            ▪ Using image docker.io/jettech/kube-webhook-certgen:v1.5.1
+        🔎  Verifying ingress addon...
+        🌟  Enabled addons: storage-provisioner, default-storageclass, ingress
+        🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+
+
+2# - Verificação do deploy
+    minikube kubectl -- get nodes
+
+        Saida: 
+            NAME       STATUS   ROLES                  AGE     VERSION
+            minikube   Ready    control-plane,master   6m28s   v1.20.2
+
+    minikube kubectl -- get pods -A
+        Saida: 
+            NAMESPACE       NAME                                        READY   STATUS      RESTARTS   AGE      
+            ingress-nginx   ingress-nginx-admission-create-tjk94        0/1     Completed   0          6m4s
+            ingress-nginx   ingress-nginx-admission-patch-r4pl6         0/1     Completed   0          6m4s
+            ingress-nginx   ingress-nginx-controller-5d88495688-sbtp9   1/1     Running     0          6m4s
+            kube-system     coredns-74ff55c5b-2wz6n                     1/1     Running     0          6m4s
+            kube-system     etcd-minikube                               1/1     Running     0          6m13s
+            kube-system     kube-apiserver-minikube                     1/1     Running     0          6m13s
+            kube-system     kube-controller-manager-minikube            1/1     Running     0          6m13s
+            kube-system     kube-flannel-ds-amd64-lw7lv                 1/1     Running     0          6m3s
+            kube-system     kube-proxy-lcxx7                            1/1     Running     0          6m3s
+            kube-system     kube-scheduler-minikube                     1/1     Running     0          6m13s
+            kube-system     storage-provisioner                         1/1     Running     1          6m17s
+
+3# (linux) Cria alias para comando
+
+    alias kubectl="minikube kubectl --"
+
+4# Deploy AWX operator
+    Troque o TAG pela versão da release mais recente no site : https://github.com/ansible/awx-operator/releases
+        
+        kubectl apply -f https://raw.githubusercontent.com/ansible/awx-operator/<TAG>/deploy/awx-operator.yaml
+    
+    Ex:  kubectl apply -f https://raw.githubusercontent.com/ansible/awx-operator/0.12.0/deploy/awx-operator.yaml
+
+    Saida: 
+        customresourcedefinition.apiextensions.k8s.io/awxs.awx.ansible.com created
+        customresourcedefinition.apiextensions.k8s.io/awxbackups.awx.ansible.com created
+        customresourcedefinition.apiextensions.k8s.io/awxrestores.awx.ansible.com created
+        clusterrole.rbac.authorization.k8s.io/awx-operator created
+        clusterrolebinding.rbac.authorization.k8s.io/awx-operator created
+        serviceaccount/awx-operator created
+        deployment.apps/awx-operator created
+
+5# - aguarde status de running para o pod 
+    comando de coleta de pods: 
+        kubectl get pods
+
+    saida: 
+        NAME                            READY   STATUS    RESTARTS   AGE
+        awx-operator-7dbf9db9d7-z9hqx   1/1     Running   0          50s
+
+6# Crie um arquivo de configuração com o nome awx-demo.yml 
+    o metadata.name é o nome da instancia do awx
+            ex: 
+                ---
+                apiVersion: awx.ansible.com/v1beta1
+                kind: AWX
+                metadata:
+                name: awx-demo
+                spec:
+                service_type: nodeport
+                ingress_type: none
+                hostname: awx-demo.example.com
+
+7# Crie a instancia awx no cluster
+    comando
+        minikube kubectl apply -f awx-demo.yml
+
+
+8# verificações: 
+    logs: kubectl logs -f
+
+    pods: kubectl get pods -l "app.kubernetes.io/managed-by=awx-operator"
+    svc: kubectl get svc -l "app.kubernetes.io/managed-by=awx-operator"
+
+9# acesso: 
+    minikube service awx-demo-service --url
+
+10# Direcionamento para acesso 
+https://www.linuxtechi.com/install-ansible-awx-kubernetes-minikube/
+ultimo item
+
+
+kubectl port-forward svc/ansible-awx-service --address 0.0.0.0 30226:80 &> /dev/null &
+
+
+ minikube tunnel &
+
+## funcionando  (tunel para acesso a partir da porta 80- url de acesso http://78.138.99.202:8034/  )
+echo -n 31700 | xargs -d ' ' -I% bash -c 'socat TCP4-LISTEN:80,fork TCP4:192.168.58.2:% &'
+
+iptables -t nat -A PREROUTING -i eth0-local -p tcp -d ! <Ip_Conectividade> --dport 32483 -j REDIRECT --to-port 3128
+
+
